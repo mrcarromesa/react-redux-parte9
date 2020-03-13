@@ -1,68 +1,148 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<h1>Iniciando projeto RocketShoes</h1>
 
-## Available Scripts
+- Basicamente foi iniciado o projeto conforme:
 
-In the project directory, you can run:
+  - [Projeto com ReactJS Parte 1 (Inicio)](https://github.com/mrcarromesa/react-parte1)
+  - [Configurando o ESLint, Prettier, Editor Config](https://github.com/mrcarromesa/react-parte3)
 
-### `yarn start`
+---
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+<h2>Detalhes sobre as rotas</h2>
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+- No caso das rotas dessa vez não foi adicionado o componente `BrowserRoute` diretamente
+nas rotas, mas sim no `src/App.js`, motivo: como precisaremos ter outros componentes que
+precisará acessar as rotas como no caso um Header de navegação, então esse componente precisará
+está dentro do `BrowserRoute`, e preciso do componente `Routes` para exibir a rota acessada,
+dessa forma o código no arquivo `src/App.js` ficará dessa forma:
 
-### `yarn test`
+```js
+function App() {
+  return (
+    <BrowserRouter>
+      <Header />
+      <Routes />
+    </BrowserRouter>
+  );
+}
+```
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Nesse caso a ideia do `Header` é uma navegação para acesso as rotas.
 
-### `yarn build`
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+<h2> Estilizar componentes que não são do html e sim nativo do react</h2>
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- No arquivo `src/components/Header/style.js` temos o component `Link` importado:
 
-### `yarn eject`
+```js
+import { Link } from 'react-router-dom';
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- Para estilizar esse componente com `styled-component` é necessário realizar o seguinte:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```js
+export const Cart = styled(Link)``;
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- Nesse caso colocamos o component dentro dos "(", ")"
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+- E no arquivo que importar esse style poderá chamar esse compoente `Cart` que no caso é um `Link` já estilizado:
 
-## Learn More
+```js
+<Cart>...</Cart>
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+<h2>Trabalhando com colunas CSS</h2>
 
-### Code Splitting
+- Veja o exemplo a seguir:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+```css
+ul {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 20px;
+}
+```
 
-### Analyzing the Bundle Size
+- Definimos a propriedade `display: grid;` e propriedade `grid-template-columns` bem como a propriedade `grid-gap` para o container, o qual tornará seus elementos em colunas seguindo template em `grid-template-columns`
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+- Mais detalhes sobre tamanhos e outras propriedades em: [grid-template-columns](https://www.origamid.com/projetos/css-grid-layout-guia-completo/)
 
-### Making a Progressive Web App
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+---
 
-### Advanced Configuration
+<h2>Elementos relativos CSS</h2>
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+- Veja o seguinte exemplo:
 
-### Deployment
+```html
+<div>
+  <span>Nome</span>
+  <button><span>OK</span></button>
+```
+- Se desejarmos manipular apenas o primeiro `span` que está diretamente na `div`, e não mexer no `span` dentro
+do `button` utilizamos o seguinte css:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+```css
+div > span {
+  ...
+}
+```
 
-### `yarn build` fails to minify
+- Dessa forma o `span` dentro do `button` não sofrerá alteração.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+
+---
+
+<h2>Forçando o margi-top: auto;</h2>
+
+- O container deverá ser `display: flex`;
+
+- O item dentro do container pode inserir o `margin-top: auto` para mante-lo próximo do bottom do container
+
+---
+
+<h2>align-self</h2>
+
+- Essa é outra propriedade de css que alinha um elemento dentro de um container
+flex, podendo ser para ocupar toda area: `stretch`, centralizar verticalmente `center`,
+alinhar ao topo vertical `start`, ou a base vertical `end`.
+
+
+---
+<h2>Para facilitar a manipulação de cores dentro do js podemos utilzar a lib polished</h2>
+
+- Se precisamos manipular uma dada cor seja para um hover por exemplo podemos utilizar o polished
+
+- Para instalar execute o comando:
+
+```bash
+yarn add polished
+```
+
+- Importar no arquivo:
+
+```js
+import { darken } from 'polished';
+```
+
+- Utilizar no css do `styled-component`:
+
+```js
+&:hover {
+  background: ${darken(0.1, '#7159c1')};
+}
+```
+
+- Parametros:
+
+  - o primeiro é a força
+  - o segundo é a cor que queremos manipular
+---
+
+<h2>Propriedade de alinhamento utilizada junto com display flex</h2>
+
+- Podemos utilizar a propriedade `align-items: baseline;` para alinhar os componetes a linha base dele.
