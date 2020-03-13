@@ -1,38 +1,64 @@
-<h1>API JSON</h1>
+<h1>React com Redux - parte 3</h1>
 
-- Utilizar api JSON fake para testes
+- Trabalhando com internacionalização:
 
-- [JSON Server](https://github.com/typicode/json-server)
+- Mais detalhes nesse link [Internacionalização De Forma Nativa em Javascript](https://blog.matheuscastiglioni.com.br/internacionalizacao-de-forma-nativa-javascript/)
 
-- Instalar de forma global com yarn:
+- Um exemplo está no arquivo `src/util/format.js`
 
-```bash
-yarn global add json-server
-```
-- Criar um arquivo json na aplicação por exemplo `server.json` contendo uma estrutura json
+```js
+export const { format: formatPrice } = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL'
+});
 
-- Como deixar a api rodando:
-  - Acessar a pasta do arquivo
-  - Executar o seguinte comando:
-
-```bash
-json-server NOME_DO_ARQUIVO.json -p NUMERO_DA_PORTA -w
 ```
 
-- Basicamente esse comando consite de inserir o nome do arquivo `json` o número da porta
-e se deseja que fique assistindo se houver alterações no arquivo.
+- Nesse caso o foi utlizado uma desestruturação da função, pois comumente a função é escrita da seguinte forma:
 
-- Exemplo na prática:
-
-```bash
-json-server server.json -p 3333 -w
+```js
+const valorFormatado = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL'
+}).format('VALOR_AQUI');
 ```
 
-- Depois só acessar no browser:
+- No outro caso exportamos a desestruturação o seja o format e apelidamos de `formatPrice`, no caso para ficar melhor entendivel:
 
-- Ex. nesse caso utilizando o arquivo que temos `server.js`:
+```js
+export const formatPrice = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL'
+}).format;
+```
 
-  - http://localhost:3333/products ** Irá listar todos os produtos **
-  - http://localhost:3333/products/4 ** Irá listar apenas um produto, nesse caso o produto id:4 **
-  - http://localhost:3333/stock ** Irá listar nosso stock **
+---
 
+<h2>Pensando na performance</h2>
+
+- podemos adicionar functions diretamente no render:
+
+```js
+// ...
+<span>{formatPrice(product.price)}</span>
+// ..
+```
+
+- O problema é que toda vez que o state sofrer uma alteração essa função será chamada sempre
+
+- Nesse caso podemos utilizar dentro da função de incialização:
+
+```js
+async componentDidMount() {
+  const response = await api.get('/products');
+
+  const data = response.data.map(product => ({
+    ...product,
+    priceFormatted: formatPrice(product.price)
+  }));
+
+  this.setState({ products: data });
+}
+```
+
+- Então algo que tem que cuidar muito no react é essa parte de recursos, de chamar funções que serão chamadas novamente sempre que houver alteração no estado.
