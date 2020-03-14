@@ -1,90 +1,101 @@
-<h1>React com redux parte 4 - Instalando e Configurando o Redux</h1>
+<h1>React com redux parte 5 - Salvando itens no carrinho (Reducer)</h1>
 
-- Inicialmente instalamos o redux, e a integração do react com o redux
-
-- Na linha de comando digitar o seguinte:
-
-```bash
-yarn add redux react-redux
-```
-
-- Criar a pasta `src/store`, que será onde todos os arquivos redux irão ficar;
-
-- Criar um arquivo `src/store/index.js` onde será realizada a configuração inicial do redux;
-
-- No arquivo `src/App.js` importar `import { Provider } from 'react-redux'`, esse `Provider`
-deixará disponível o store da aplicação que foi criado em `src/store/index.js` de forma global
-disponível para todos os componentes, então deve inserir por volta de todos os componentes da aplicação:
-
+- No arquivo `src/pages/Home/index.js` importar o seguinte:
 
 ```js
-  <Provider>
-    <BrowserRouter>
-      <Header />
-      <Routes />
-      <GlobalStyle />
-    </BrowserRouter>
-  </Provider>
+import { connect } from 'react-redux';
 ```
 
-- E ainda no `src/App.js` informar ao provider o store da aplicação:
+- O `connect` irá conectar o componente com o estado do redux
 
-- Primeiro importar o store:
+- Então no componente tiramos o `export default` e inserimos no final do arquivo:
 
 ```js
-import store from './store'
+export default connect()(Home);
 ```
 
-- e adicionar propriedade ao componente `Provider`
+- Pois o `connect` executa uma function que retorna outra function
+
+- Ainda no componente `Home` adicionamos o `onClick` no `button`:
 
 ```js
-<Provier store={store}>
+onClick={() => this.handleAddProduct(product)}
 ```
 
-- Para poder utilizar o store do redux é necessário criar uma função de reducer dentro do store `src/store/index.js`:
+- E então implementamos a function:
 
 ```js
-function cart() {
+handleAddProduct = product => {
+    const { dispatch } = this.props;
+
+
+    dispatch({
+      type: 'ADD_TO_CART', //Nome da action
+      product // um "valor" ou restante do conteudo da action
+    });
+};
+```
+- o redux irá realizar a chamada para todas as funções dentro do modules, que estão definidas dentro do `rootReducer`
+
+- Agora dentro o `src/store/modules/cart/reducer.js` realizar a alteração:
+
+```js
+export default function cart(state = [], action) {
+
+  console.log(action);
+
   return [];
 }
 
-const store = createStore(cart);
 ```
 
+- Dando atenção a function:
+
 ```js
-  <Provider store={store}>
+function cart(state, action)
 ```
 
----
+- O `state` é o estado anterior e é imutável
 
-<h2>Criar módulos reducer</h2>
+- O `action` é a ação que está sendo disparada para todos os reducers
 
-- Criar o arquivo `src/store/modules/cart/reducer.js` e dentro do arquivo adicionar a function `cart` ao invés de manter no arquivo `src/store/index`:
+- Para adicionar/alterar informações dentro do `state`, primeiro realizamos um `switch case`, para decidir quando realizar uma ação ou não:
 
 ```js
-export default function cart() {
-  return [];
+switch (action.type) {
+  case 'ADD_TO_CART':
+    return [...state, action.product]; // retorna o estado modificado
+
+  default :
+    return state; // retorna o próprio state
 }
 ```
 
-- Caso tenha mais de um reducer na aplicação o correto é criar um `src/store/modules/rootReducer.js` com o conteúdo:
+- Então como, ao realizar o dispach de uma action é chamado todos os reducers, é necessário que em todos eles só escutem a action que seja relativo a ele.
+
+
+----
+
+
+<h2>Acessando o reducer através de outro componente</h2>
+
+- Acessar o reducer `cart` através do componente `Header`:
+
+- Alterar o `export default`:
 
 ```js
-import { combineReducers } from 'redux';
+function Header({ cart, cartSize }) {
+  //...
+}
 
-import cart from './cart/reducer';
-
-export default cobineReducers({
-  cart,
-});
+export default connect(state => {
+  cart: state.cart
+  cartSize: state.cart.length
+})(Header);
 ```
 
-- E quando precisar adicionar mais apenas adicionar dentro da function `cobineReducers()`
 
-- e no arquivo `src/store/index`, importatmos o `./modules/rootReducer` e alteramos na função `createStore`:
+- a propriedade `cart` pode ser outro nome que definirmos apenas lembrando que em `Header({ cart })` ali no lugar de `cart` também precisará ser o mesmo nome que definirmos.
 
-```js
-import rootReducer from './modules/rootReducer';
+- e no `state.cart`, a propriedade `cart` é o nome do reducer que criamos em `src/store/modules/cart/reducer.js`
 
-const store = createStore(rootReducer);
-```
