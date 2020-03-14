@@ -1,64 +1,90 @@
-<h1>React com Redux - parte 3</h1>
+<h1>React com redux parte 4 - Instalando e Configurando o Redux</h1>
 
-- Trabalhando com internacionalização:
+- Inicialmente instalamos o redux, e a integração do react com o redux
 
-- Mais detalhes nesse link [Internacionalização De Forma Nativa em Javascript](https://blog.matheuscastiglioni.com.br/internacionalizacao-de-forma-nativa-javascript/)
+- Na linha de comando digitar o seguinte:
 
-- Um exemplo está no arquivo `src/util/format.js`
-
-```js
-export const { format: formatPrice } = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL'
-});
-
+```bash
+yarn add redux react-redux
 ```
 
-- Nesse caso o foi utlizado uma desestruturação da função, pois comumente a função é escrita da seguinte forma:
+- Criar a pasta `src/store`, que será onde todos os arquivos redux irão ficar;
+
+- Criar um arquivo `src/store/index.js` onde será realizada a configuração inicial do redux;
+
+- No arquivo `src/App.js` importar `import { Provider } from 'react-redux'`, esse `Provider`
+deixará disponível o store da aplicação que foi criado em `src/store/index.js` de forma global
+disponível para todos os componentes, então deve inserir por volta de todos os componentes da aplicação:
+
 
 ```js
-const valorFormatado = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL'
-}).format('VALOR_AQUI');
+  <Provider>
+    <BrowserRouter>
+      <Header />
+      <Routes />
+      <GlobalStyle />
+    </BrowserRouter>
+  </Provider>
 ```
 
-- No outro caso exportamos a desestruturação o seja o format e apelidamos de `formatPrice`, no caso para ficar melhor entendivel:
+- E ainda no `src/App.js` informar ao provider o store da aplicação:
+
+- Primeiro importar o store:
 
 ```js
-export const formatPrice = new Intl.NumberFormat('pt-BR', {
-  style: 'currency',
-  currency: 'BRL'
-}).format;
+import store from './store'
+```
+
+- e adicionar propriedade ao componente `Provider`
+
+```js
+<Provier store={store}>
+```
+
+- Para poder utilizar o store do redux é necessário criar uma função de reducer dentro do store `src/store/index.js`:
+
+```js
+function cart() {
+  return [];
+}
+
+const store = createStore(cart);
+```
+
+```js
+  <Provider store={store}>
 ```
 
 ---
 
-<h2>Pensando na performance</h2>
+<h2>Criar módulos reducer</h2>
 
-- podemos adicionar functions diretamente no render:
-
-```js
-// ...
-<span>{formatPrice(product.price)}</span>
-// ..
-```
-
-- O problema é que toda vez que o state sofrer uma alteração essa função será chamada sempre
-
-- Nesse caso podemos utilizar dentro da função de incialização:
+- Criar o arquivo `src/store/modules/cart/reducer.js` e dentro do arquivo adicionar a function `cart` ao invés de manter no arquivo `src/store/index`:
 
 ```js
-async componentDidMount() {
-  const response = await api.get('/products');
-
-  const data = response.data.map(product => ({
-    ...product,
-    priceFormatted: formatPrice(product.price)
-  }));
-
-  this.setState({ products: data });
+export default function cart() {
+  return [];
 }
 ```
 
-- Então algo que tem que cuidar muito no react é essa parte de recursos, de chamar funções que serão chamadas novamente sempre que houver alteração no estado.
+- Caso tenha mais de um reducer na aplicação o correto é criar um `src/store/modules/rootReducer.js` com o conteúdo:
+
+```js
+import { combineReducers } from 'redux';
+
+import cart from './cart/reducer';
+
+export default cobineReducers({
+  cart,
+});
+```
+
+- E quando precisar adicionar mais apenas adicionar dentro da function `cobineReducers()`
+
+- e no arquivo `src/store/index`, importatmos o `./modules/rootReducer` e alteramos na função `createStore`:
+
+```js
+import rootReducer from './modules/rootReducer';
+
+const store = createStore(rootReducer);
+```
