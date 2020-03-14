@@ -1,76 +1,139 @@
-<h1>React com redux parte 6 - Ractotron</h1>
+<h1>React com redux parte 7 - Cart</h1>
 
-- Baixar de [Reactotron](https://github.com/infinitered/reactotron/releases)
-
-- Baixar a versão mais recente não beta.
-
-- No projeto instalar as dependencias:
-
-```bash
-yarn add reactotron-react-js reactotron-redux
-```
-
-- Criar um arquivo `src/config/ReactotronConfig.js` add o seguinte conteudo:
+- Na pagina cart adicionar o `connect` do redux:
 
 ```js
-import Reactotron from 'reactotron-react-js';
-import { reactotronRedux } from 'reactotron-redux';
+import { connect } from 'react-redux';
 
-if (process.env.NODE_ENV === 'development') {
-  const tron = Reactotron.configure()
-    .use(reactotronRedux())
-    .connect();
+// ...
 
-  tron.clear();
+function Cart({ cart }) {
+  //..
+}
 
-  console.tron = tron;
+const mapStateToProps = state => ({
+  cart: state.cart
+});
+
+export default connect(mapStateToProps)(Cart);
+```
+
+- No `src/store/modules/cart/reducer.js` alterar para o seguinte:
+
+```js
+export default function cart(state = [], action) {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return [...state, { ...action.product, amount: 1 }];
+    default:
+      return state;
+  }
+}
+
+```
+
+- A invés de utilizar:
+
+```js
+return [...state, action.product];
+```
+
+- Estamos utilizando:
+
+```js
+return [...state, {...action.product, amount: 1}];
+```
+
+- para já adicionar a quantidade padrão `1` no item adicionado ao carrinho.
+
+- E na página `cart`  adicionar o `cart.map`, para retornar o itens presente no `state.cart`
+
+---
+
+<h2>Immer</h2>
+
+Como o state no React é imutavel, precisamos sempre criar um novo estado ao invés de alterar o estado anterior.
+
+O immer nos permite ter um meio termo entre os dois, escrever o código como se fosse mutável e o immer com esse nosso código cria um novo estado.
+
+- [Repositório do Immer](https://github.com/immerjs/immer)
+- [Docs do Immer](https://immerjs.github.io/immer/docs/introduction)
+
+- Instalar o Immer:
+
+```bash
+yarn add immer
+```
+
+- No arquivo `src/store/modules/cart/reducer.js`, alterar para:
+
+```js
+import produce from 'immer';
+
+export default function cart(state = [], action) {
+  switch (action.type) {
+    case 'ADD_TO_CART':
+      return produce(state, draft => {
+
+        const productIndex = draft.findIndex(p => p.id === action.product.id);
+
+        if (productIndex >= 0) {
+          draft[productIndex].amount++;
+        } else {
+          draft.push({...action.product, amount: 1});
+        }
+
+      });
+    default:
+      return state;
+  }
+}
+
+```
+
+- O elemento draft é do tipo Proxy, o qual não dá para pegar os elementos diretamente no console,
+Para sabermos os elementos que há nele realizamos o seguinte:
+
+```js
+// Primeiro encontramos esse
+console.log(Object.keys(draft));
+
+// Depois de encontrar o primeiro
+// Vamos para o próximo até encontrar uma propriedade que possamos acessar, como no caso id, ou title
+
+if (draft.length > 0) {
+  // Executar esse apenas após encontrar o primeiro
+  console.log(Object.keys(draft[0]));
+  // Executar esse apenas após encontrar o anterior
+  console.log(draft[0].title);
 }
 ```
 
-- o `process.env.NODE_ENV` sempre será `development` quando executarmos `yarn start`, porém quando for no `build`,
-não irá executar o conteúdo do if.
+- Dessa forma da para entender como e que propriedade obter de draft para pesquisar qual elemento alterar.
 
-- Para remover o e erro do eslint do `console.tron`, adicione o seguinte nas rules do `.eslintrc.js`
-
-
-```js
-'no-console': ["error", { allow: ["tron"] }]
-```
----
-
-<h2>Integrando o Redux com o Ractotron</h2>
-
-- No arquivo `src/store/index.js` alterar:
-
-```js
-const enhancer = process.env.NODE_ENV === 'development' ? console.tron.createEnhancer() : null;
-
-const store = createStore(rootReducer, enhancer);
-
-```
-
-- E no arquivo `src/App.js` adicionar a importação do `config/ReactotronConfig` é importante que ela venha antes da importação do `store`
-
+- E após essa alteração o carrinho soma quando é adicionado o mesmo produto
 
 ---
 
-<h2>Detalhes sobre a aplicação Reactotron</h2>
+<h2>Remover Item do carrinho</h2>
 
-- Com Reactron podemos monitorar as actions:
+- Lembrando que no `App.js` há o componente `<Provider store={store}>` o qual adiciona o `props.dispatch` aos `props`
 
-<img src='./imgs_readme/01.png' />
+- Com isso em mente altere a function `Cart`:
 
-- acompanhar uma variável do state:
+```js
+function Cart({ cart, dispatch }) {
+```
 
-<img src='./imgs_readme/02.png'>
+- No botão de remover item na function `Cart` adicione o evento `onClick`:
 
-<img src='./imgs_readme/03.png'>
+```js
+<button
+    type="button"
+    onClick={() =>
+      dispatch({ type: 'REMOVE_FROM_CART', id: product.id })
+    }
+  >
+```
 
-<img src='./imgs_readme/04.png'>
-
-- Salvar snapshot para resgatar depois que recarregar a página por exemplo.:
-
-<img src='./imgs_readme/05.png'>
-<img src='./imgs_readme/06.png'>
-
-
+- Ao clicar podemos ver no app `Reactotron` que foi chamada a action `REMOVE_FROM_CART`
