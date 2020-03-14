@@ -58,19 +58,19 @@ const store = createStore(rootReducer, enhancer);
 
 - Com Reactron podemos monitorar as actions:
 
-<img src='./imgs_readme/01' />
+<img src='./imgs_readme/01.png' />
 
 - acompanhar uma variável do state:
 
-<img src='./imgs_readme/02'>
+<img src='./imgs_readme/02.png'>
 
-<img src='./imgs_readme/03'>
+<img src='./imgs_readme/03.png'>
 
-<img src='./imgs_readme/04'>
+<img src='./imgs_readme/04.png'>
 
 - Salvar snapshot para resgatar depois que recarregar a página por exemplo.:
 
-<img src='./imgs_readme/05'>
-<img src='./imgs_readme/06'>
+<img src='./imgs_readme/05.png'>
+<img src='./imgs_readme/06.png'>
 
 
