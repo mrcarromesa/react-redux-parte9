@@ -1,122 +1,151 @@
-<h1>React com redux parte 8 - Ajustando as Actions</h1>
+<h1>React com redux parte 9 - Atualizar quantidade e totais</h1>
 
-- Criar o arquivo `src/store/modules/cart/actions.js` e adicionar o conteudo:
-
-```js
-export function addToCart(product) {
-  return {
-    type: 'ADD_TO_CART',
-    product
-  };
-}
-
-export function removeFromCart(id) {
-  return { type: 'REMOVE_FROM_CART', id };
-}
-
-```
-
-- Na página `Home` adicionar o import:
+- Adicionar a nova action em `src/store/modules/cart/actions.js`
 
 ```js
-import { bindActionCreators } from 'redux';
-
-import * as CartActions from '../../store/modules/cart/actions';
+export function updateAmount(id, amount) {
+  return { type: '@cart/UPDATE_AMOUNT', id, amount };
+}
 ```
 
-- E agora com esse `bindActionCreators` podemos adicionar a seguinte function ao final do arquivo:
+- No arquivo `src/store/modules/cart/reducer.js`
+
+```js
+case '@cart/UPDATE_AMOUNT':
+  if (action.amount <= 0) {
+    return state;
+  }
+  return produce(state, draft => {
+    const productIndex = draft.findIndex(p => p.id === action.id);
+
+    if (productIndex >= 0) {
+      draft[productIndex].amount = Number(action.amount);
+    }
+  });
+```
+
+- Lembrando que a responsabilidade de validar os dados é do redux, nesse caso para verificar se a quantidade é menor que zero.
+
+
+- Alterar a page `Cart` :
 
 ```js
 const mapDispatchToProps = dispatch =>
   bindActionCreators(CartActions, dispatch);
+
+export default connect(mapStateToProps, mapDispatchToProps)(Cart);
 ```
 
-- Essa function converte pedaços do state em propriedades, converte actions do redux em propriedades do componente
-
-- Como não temos o `mapStateToProps` que é primeiro parametro para inserir no `connect()`, inserimos o primeiro parametro como `null`:
+- Adicionar a nova prop:
 
 ```js
-export default connect(null, mapDispatchToProps)(Home);
+function Cart({ cart, removeFromCart, updateAmount }) {
 ```
 
-- Dessa forma podemos alterar a function `handleAddProduct`:
+
+----
+
+<h2>Calcular Subtotal</h2>
+
+
+- Poderiamos realizar o calculo do subtotal no redux, ou criar uma function para no render para calcular, porém entramos no problema de performace então para realizar esse calculo faremos o seguinte:
+
+- Na página `Cart` adicionar o import:
 
 ```js
-handleAddProduct = product => {
-  const { addToCart } = this.props;
-
-  addToCart(product);
-};
+import { formatPrice } from '../../util/format';
 ```
 
-- Então o que acontece..., a `const mapDispatchToProps`, envia para o `props`, o `dispatch({CartActions})`, dessa forma só é necessário chamar a function do `CartActions` que nesse caso é `addToCart`.
+- Ajustar a function `mapStateToProps`
 
-- Dessa forma não precisamos mais chamar tudo isso:
+- Não esquecer os parenteses em volta das chaves.
 
 ```js
-dispatch({type: 'ADD_TO_CART', product});
+const mapStateToProps = state => ({
+  // Não esquecer os parenteses em volta das chaves.
+  cart: state.cart.map(product => ({
+    ...product,
+    subtotal: formatPrice(product.amount * product.price)
+  }))
+});
 ```
 
-- O código fica mais "verboso"
+- Não esquecer os parenteses em volta das chaves.
+
 
 ---
 
-<h2>Refatorar os nomes das actions</h2>
+<h2> O total </h2>
 
-- Para ficar fácil de identificar os nomes de que modulo está sendo disparado a action, uma boa prática é utilizar esse formato `@nome_do_modulo/AÇÃO`
-
-- no arquivo `src/store/modules/cart/actions.js` alterar para:
+- Ajustar o `mapStateToProps` da página `Cart`:
 
 ```js
-export function addToCart(product) {
-  return {
-    type: '@cart/ADD',
-    product
-  };
-}
-
-export function removeFromCart(id) {
-  return { type: '@cart/REMOVE', id };
-}
-
+const mapStateToProps = state => ({
+  // Não esquecer os parenteses em volta das chaves.
+  cart: state.cart.map(product => ({
+    ...product,
+    subtotal: formatPrice(product.amount * product.price)
+  })),
+  total: formatPrice(state.cart.reduce((total, product) => {
+    return total + product.price * product.amount;
+  }, 0))
+});
 ```
+- Realizamos o reduce para reduzir o array para um só valor,
+nesse caso somamos a variavel total ao preço vezes a quantidade do produto, iniciando o total em zero.
 
-- no arquivo `src/store/modules/cart/reducer.js` alterar para:
+- Não se esquecer de adicionar a propriedade `total` na function `Cart`:
 
 ```js
-import produce from 'immer';
-
-export default function cart(state = [], action) {
-  switch (action.type) {
-    case '@cart/ADD':
-      return produce(state, draft => {
-        // console.log(draft.length);
-        // console.log(Object.keys(draft));
-
-        /* if (draft.length > 0) {
-          console.log(Object.keys(draft[0]));
-          console.log(draft[0].title);
-        } */
-
-        const productIndex = draft.findIndex(p => p.id === action.product.id);
-
-        if (productIndex >= 0) {
-          draft[productIndex].amount += 1;
-        } else {
-          draft.push({ ...action.product, amount: 1 });
-        }
-      });
-    case '@cart/REMOVE':
-      return produce(state, draft => {
-        const productIndex = draft.findIndex(p => p.id === action.id);
-
-        if (productIndex >= 0) {
-          draft.splice(productIndex, 1);
-        }
-      });
-    default:
-      return state;
-  }
-}
-
+function Cart({ cart, total, removeFromCart, updateAmount }) {
 ```
+
+
+---
+<h2>Resumindo...</h2>
+
+- para calcular o total utilizando `redux` por questão de desempenho, utilizamos o `mapStateToProps`
+
+
+---
+
+<h2>Exibindo quantidades na Home</h2>
+
+- Na página `Home` vamos adicionar o `mapStateToProps`:
+
+```js
+const mapStateToProps = state => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+    return amount;
+  }, {})
+});
+```
+
+- Passamos o objeto
+
+- A primeira variavel nesse caso `amount` o qual é inicializada com `{}`
+
+- E a variavel de controle que pertence ao objeto `state.cart` que chamamos de `product`;
+
+- e geramos um array, com as quantidades.
+
+- Exemplo de reduce [Javascript reduce on array of objects](https://stackoverflow.com/questions/5732043/javascript-reduce-on-array-of-objects)
+
+
+
+```js
+var arr = [{x:1}, {x:2}, {x:4}];
+arr.reduce(function (acc, obj) { return acc + obj.x; }, 0); // 7
+console.log(arr);
+```
+
+- Como a page `Home` é uma class utilizamos o `this.props.amount` para obter o objeto gerado no `mapStateToProps`
+
+- E na quantidade colocamos:
+
+```js
+ {amount[product.id] || 0}
+```
+
+- O zero é no caso de ser `undefined` ou `vazio`
